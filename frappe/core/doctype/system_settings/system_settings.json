@@ -455,7 +455,7 @@
    "label": "Application Name"
   },
   {
-   "default": "1",
+   "default": "0",
    "fieldname": "strip_exif_metadata_from_uploaded_images",
    "fieldtype": "Check",
    "label": "Strip EXIF tags from uploaded images"
