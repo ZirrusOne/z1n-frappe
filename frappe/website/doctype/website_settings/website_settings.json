@@ -195,7 +195,7 @@
    "options": "Top Bar Item"
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "hide_footer_signup",
    "fieldtype": "Check",
    "label": "Hide Footer Signup"
