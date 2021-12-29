@@ -84,6 +84,7 @@ def drop_user_and_database(db_name, root_login, root_password):
 	dbman.delete_user(db_name, host="%")
 	dbman.delete_user(db_name)
 	dbman.drop_database(db_name)
+	dbman.flush_privileges()
 
 def bootstrap_database(db_name, verbose, source_sql=None):
 	import sys
