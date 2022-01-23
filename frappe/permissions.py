@@ -320,7 +320,7 @@ def get_valid_perms(doctype=None, user=None):
 
 	doctypes_with_custom_perms = get_doctypes_with_custom_docperms()
 	for p in perms:
-		if not p.parent in doctypes_with_custom_perms:
+		if p.parent and p.role not in doctypes_with_custom_perms:
 			custom_perms.append(p)
 
 	if doctype:
@@ -336,7 +336,7 @@ def get_all_perms(role):
 		from `tabCustom DocPerm`""")
 
 	for p in perms:
-		if p.parent not in doctypes_with_custom_perms:
+		if p.parent and p.role not in doctypes_with_custom_perms:
 			custom_perms.append(p)
 	return custom_perms
 
