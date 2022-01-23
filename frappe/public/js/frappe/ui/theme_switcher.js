@@ -42,7 +42,7 @@ frappe.ui.ThemeSwitcher = class ThemeSwitcher {
 	}
 
 	refresh() {
-		this.current_theme = document.documentElement.getAttribute("data-theme") || "light";
+		this.current_theme = document.documentElement.getAttribute("data-theme") || "dark";
 		this.fetch_themes().then(() => {
 			this.render();
 		});
