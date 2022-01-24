@@ -56,11 +56,11 @@ frappe.data_import.ImportPreview = class ImportPreview {
 		this.columns = this.preview_data.columns.map((col, i) => {
 			let df = col.df;
 			let column_width = 120;
-			if (col.header_title === 'Sr. No') {
+			if (col.header_title === 'Row No.') {
 				return {
 					id: 'srno',
-					name: 'Sr. No',
-					content: 'Sr. No',
+					name: 'Row No.',
+					content: 'Row No.',
 					editable: false,
 					focusable: false,
 					align: 'left',
@@ -244,7 +244,7 @@ frappe.data_import.ImportPreview = class ImportPreview {
 		let changed = [];
 		let fields = this.preview_data.columns.map((col, i) => {
 			let df = col.df;
-			if (col.header_title === 'Sr. No') return [];
+			if (col.header_title === 'Row No.') return [];
 
 			let fieldname;
 			if (!df) {
