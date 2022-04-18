@@ -1,15 +1,19 @@
 name: Pull upstream
 on:
+  workflow_dispatch:
   schedule:
     # * is a special character in YAML so you have to quote this string
     - cron:  '0 7 * * *'
+  
 jobs:
   release_pull_request:
     runs-on: ubuntu-latest
     name: release_pull_request
     steps:
     - name: Trust My Directory
-      run: export GIT_CEILING_DIRECTORIES=/__w # only work before git v2.35.2
+      run: |
+        export GIT_CEILING_DIRECTORIES=/__w
+        git config --global --add safe.directory /github/workspace
     - name: checkout
       uses: actions/checkout@v1
     - name: Create PR to branch
