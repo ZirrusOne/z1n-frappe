@@ -197,6 +197,12 @@ app_license = "{app_license}"
 # before_install = "{app_name}.install.before_install"
 # after_install = "{app_name}.install.after_install"
 
+# Uninstallation
+# ------------
+
+# before_uninstall = "{app_name}.uninstall.before_uninstall"
+# after_uninstall = "{app_name}.uninstall.after_uninstall"
+
 # Desk Notifications
 # ------------------
 # See frappe.core.notifications.get_notification_config
@@ -311,6 +317,13 @@ user_data_fields = [
 # 	"{app_name}.auth.validate"
 # ]
 
+# Translation
+# --------------------------------
+
+# Make link fields search translated document names for these DocTypes
+# Recommended only for DocTypes which have limited documents with untranslated names
+# For example: Role, Gender, etc.
+# translated_search_doctypes = []
 """
 
 desktop_template = """from frappe import _

@@ -115,6 +115,17 @@ class TestUser(unittest.TestCase):
 		# system manager is not added (it is reset)
 		self.assertFalse('System Manager' in [d.role for d in me.roles])
 
+		# ignore permlevel using flags
+		me.flags.ignore_permlevel_for_fields = ["roles"]
+		me.add_roles("System Manager")
+
+		# system manager now added due to flags
+		self.assertTrue("System Manager" in [d.role for d in me.get("roles")])
+
+		# reset flags
+		me.flags.ignore_permlevel_for_fields = None
+
+		# change user
 		frappe.set_user("Administrator")
 
 		me = frappe.get_doc("User", "testperm@example.com")
@@ -253,7 +264,7 @@ class TestUser(unittest.TestCase):
 		c = FrappeClient(url)
 		res1 = c.session.post(url, data=data, verify=c.verify, headers=c.headers)
 		res2 = c.session.post(url, data=data, verify=c.verify, headers=c.headers)
-		self.assertEqual(res1.status_code, 200)
+		self.assertEqual(res1.status_code, 400)
 		self.assertEqual(res2.status_code, 417)
 
 	def test_user_rename(self):
@@ -357,7 +368,11 @@ class TestUser(unittest.TestCase):
 			test_user.reload()
 			self.assertEqual(update_password(new_password, key=test_user.reset_password_key), "/")
 			update_password(old_password, old_password=new_password)
-			self.assertEqual(json.loads(frappe.message_log[0]), {"message": "Password reset instructions have been sent to your email"})
+			self.assertEqual(
+				json.loads(frappe.message_log[0]).get("message"), 
+				"Password reset instructions have been sent to your email"
+			)
+
 		sendmail.assert_called_once()
 		self.assertEqual(sendmail.call_args[1]["recipients"], "test2@example.com")
 

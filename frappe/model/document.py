@@ -8,7 +8,7 @@ from frappe import _, msgprint, is_whitelisted
 from frappe.utils import flt, cstr, now, get_datetime_str, file_lock, date_diff
 from frappe.model.base_document import BaseDocument, get_controller
 from six import iteritems, string_types
-from frappe.model.naming import set_new_name, gen_new_name_for_cancelled_doc
+from frappe.model.naming import set_new_name, validate_name
 from werkzeug.exceptions import NotFound, Forbidden
 import hashlib, json
 from frappe.model import optional_fields, table_fields
@@ -191,9 +191,11 @@ class Document(BaseDocument):
 		is not set.
 
 		:param permtype: one of `read`, `write`, `submit`, `cancel`, `delete`"""
+		import frappe.permissions
+
 		if self.flags.ignore_permissions:
 			return True
-		return frappe.has_permission(self.doctype, permtype, self, verbose=verbose)
+		return frappe.permissions.has_permission(self.doctype, permtype, self, verbose=verbose)
 
 	def raise_no_permission_to(self, perm_type):
 		"""Raise `frappe.PermissionError`."""
@@ -304,8 +306,7 @@ class Document(BaseDocument):
 		self.flags.ignore_version = frappe.flags.in_test if ignore_version is None else ignore_version
 
 		if self.get("__islocal") or not self.get("name"):
-			self.insert()
-			return
+			return self.insert()
 
 		self.check_permission("write", "save")
 
@@ -416,12 +417,12 @@ class Document(BaseDocument):
 
 		# If autoname has set as Prompt (name)
 		if self.get("__newname"):
-			self.name = self.get("__newname")
+			self.name = validate_name(self.doctype, self.get("__newname"))
 			self.flags.name_set = True
 			return
 
 		if set_name:
-			self.name = set_name
+			self.name = validate_name(self.doctype, set_name)
 		else:
 			set_new_name(self)
 
@@ -499,6 +500,7 @@ class Document(BaseDocument):
 		self._validate_non_negative()
 		self._validate_length()
 		self._validate_code_fields()
+		self._sync_autoname_field()
 		self._extract_images_from_text_editor()
 		self._sanitize_content()
 		self._save_passwords()
@@ -713,6 +715,7 @@ class Document(BaseDocument):
 			else:
 				tmp = frappe.db.sql("""select modified, docstatus from `tab{0}`
 					where name = %s for update""".format(self.doctype), self.name, as_dict=True)
+
 				if not tmp:
 					frappe.throw(_("Record does not exist"))
 				else:
@@ -841,27 +844,30 @@ class Document(BaseDocument):
 				frappe.CancelledLinkError)
 
 	def get_all_children(self, parenttype=None):
-		"""Returns all children documents from **Table** type field in a list."""
-		ret = []
-		for df in self.meta.get("fields", {"fieldtype": ['in', table_fields]}):
-			if parenttype:
-				if df.options==parenttype:
-					return self.get(df.fieldname)
+		"""Returns all children documents from **Table** type fields in a list."""
+
+		children = []
+
+		for df in self.meta.get_table_fields():
+			if parenttype and df.options != parenttype:
+				continue
+
 			value = self.get(df.fieldname)
 			if isinstance(value, list):
-				ret.extend(value)
-		return ret
+				children.extend(value)
+
+		return children
 
 	def run_method(self, method, *args, **kwargs):
 		"""run standard triggers, plus those in hooks"""
-		if "flags" in kwargs:
-			del kwargs["flags"]
 
-		if hasattr(self, method) and hasattr(getattr(self, method), "__call__"):
-			fn = lambda self, *args, **kwargs: getattr(self, method)(*args, **kwargs)
-		else:
-			# hack! to run hooks even if method does not exist
-			fn = lambda self, *args, **kwargs: None
+		def fn(self, *args, **kwargs):
+			method_object = getattr(self, method, None)
+
+			# Cannot have a field with same name as method
+			# If method found in __dict__, expect it to be callable
+			if method in self.__dict__ or callable(method_object):
+				return method_object(*args, **kwargs)
 
 		fn.__name__ = str(method)
 		out = Document.hook(fn)(self, *args, **kwargs)
@@ -927,8 +933,7 @@ class Document(BaseDocument):
 
 	@whitelist.__func__
 	def _cancel(self):
-		"""Cancel the document. Sets `docstatus` = 2, then saves.
-		"""
+		"""Cancel the document. Sets `docstatus` = 2, then saves."""
 		self.docstatus = 2
 		return self.save()
 

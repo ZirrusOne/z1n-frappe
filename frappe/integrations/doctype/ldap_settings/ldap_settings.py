@@ -46,9 +46,13 @@ class LDAPSettings(Document):
 						title=_("Misconfigured"))
 
 				if self.ldap_directory_server.lower() == 'custom':
-					if not self.ldap_group_member_attribute or not self.ldap_group_mappings_section:
-						frappe.throw(_("Custom LDAP Directoy Selected, please ensure 'LDAP Group Member attribute' and 'LDAP Group Mappings' are entered"),
+					if not self.ldap_group_member_attribute or not self.ldap_group_objectclass:
+						frappe.throw(_("Custom LDAP Directoy Selected, please ensure 'LDAP Group Member attribute' and 'Group Object Class' are entered"),
 						title=_("Misconfigured"))
+
+				if self.ldap_custom_group_search and "{0}" not in self.ldap_custom_group_search:
+					frappe.throw(_("Custom Group Search if filled needs to contain the user placeholder {0}, eg uid={0},ou=users,dc=example,dc=com"),
+					title=_("Misconfigured"))
 
 			else:
 				frappe.throw(_("LDAP Search String must be enclosed in '()' and needs to contian the user placeholder {0}, eg sAMAccountName={0}"))
@@ -59,9 +63,9 @@ class LDAPSettings(Document):
 			import ssl
 
 			if self.require_trusted_certificate == 'Yes':
-				tls_configuration = ldap3.Tls(validate=ssl.CERT_REQUIRED, version=ssl.PROTOCOL_TLSv1)
+				tls_configuration = ldap3.Tls(validate=ssl.CERT_REQUIRED, version=ssl.PROTOCOL_TLS_CLIENT)
 			else:
-				tls_configuration = ldap3.Tls(validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLSv1)
+				tls_configuration = ldap3.Tls(validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLS_CLIENT)
 
 			if self.local_private_key_file:
 				tls_configuration.private_key_file = self.local_private_key_file
@@ -210,7 +214,8 @@ class LDAPSettings(Document):
 
 			ldap_object_class = self.ldap_group_objectclass
 			ldap_group_members_attribute = self.ldap_group_member_attribute
-			user_search_str = getattr(user, self.ldap_username_field).value
+			ldap_custom_group_search = self.ldap_custom_group_search or "{0}"
+			user_search_str = ldap_custom_group_search.format(getattr(user, self.ldap_username_field).value)
 
 		else:
 			# NOTE: depreciate this else path
