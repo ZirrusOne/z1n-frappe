@@ -19,7 +19,7 @@ jobs:
     - name: Create PR to branch
       uses: gorillio/github-action-sync@master
       with:
-        upstream: git@github.com:frappe/frappe.git
+        upstream: https://github.com/frappe/frappe.git
         upstream_branch: version-13
         branch: z1n
         pr_labels: upstream
