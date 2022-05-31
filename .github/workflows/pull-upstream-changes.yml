@@ -24,6 +24,6 @@ jobs:
         branch: z1n
         pr_labels: upstream
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_ACTIONS_PAT }}
+        GITHUB_TOKEN: ${{ secrets.ANDREW_PAT }}
         GITBOT_EMAIL: gitbot@zirrusone.com
         DRY_RUN: false
